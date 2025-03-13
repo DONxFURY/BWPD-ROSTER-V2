@@ -199,14 +199,28 @@
 
 <!-- Main JavaScript -->
 <script>
-  // Pre-assigned officer data with usernames and passwords.
-  // Username is a simple version of the officer's name, and password is pre-set.
-  const officers = [
-    {badge: 'A101', name: 'John Doe', callsign: 'Unit 1', rank: 'Officer', activeHours: 0, status: 'clocked-out', clockInTime: null, clockOutTime: null, username: 'johndoe', password: 'pass123'},
-    {badge: 'A102', name: 'Jane Smith', callsign: 'Unit 2', rank: 'Supervisor', activeHours: 0, status: 'clocked-out', clockInTime: null, clockOutTime: null, username: 'janesmith', password: 'pass456'},
-    {badge: 'A103', name: 'James Brown', callsign: 'Unit 3', rank: 'Admin', activeHours: 0, status: 'clocked-out', clockInTime: null, clockOutTime: null, username: 'jamesbrown', password: 'pass789'}
-  ];
-  
+  // Function to save the officers array to localStorage.
+  function saveOfficers() {
+    localStorage.setItem("officers", JSON.stringify(officers));
+  }
+
+  // Function to load the officers array from localStorage.
+  // If no data is saved, it returns the default set of officers.
+  function loadOfficers() {
+    const savedOfficers = localStorage.getItem("officers");
+    if (savedOfficers) {
+      return JSON.parse(savedOfficers);
+    }
+    return [
+      {badge: 'A101', name: 'John Doe', callsign: 'Unit 1', rank: 'Officer', activeHours: 0, status: 'clocked-out', clockInTime: null, clockOutTime: null, username: 'johndoe', password: 'pass123'},
+      {badge: 'A102', name: 'Jane Smith', callsign: 'Unit 2', rank: 'Supervisor', activeHours: 0, status: 'clocked-out', clockInTime: null, clockOutTime: null, username: 'janesmith', password: 'pass456'},
+      {badge: 'A103', name: 'James Brown', callsign: 'Unit 3', rank: 'Admin', activeHours: 0, status: 'clocked-out', clockInTime: null, clockOutTime: null, username: 'jamesbrown', password: 'pass789'}
+    ];
+  }
+
+  // Initialize the officers array from localStorage.
+  let officers = loadOfficers();
+
   let currentUser = null; // The logged-in officer
   
   // Officer Login: check credentials against the officer data.
@@ -223,7 +237,7 @@
       $("#loginModal").modal("hide");
       document.getElementById("loginModal").style.display = "none";
       document.getElementById("mainContent").classList.remove("hidden");
-      // If logged in officer is Admin, show the Manage Officers tab and admin-only table columns.
+      // If logged in officer is Admin, show the Manage Officers tab and admin-only columns.
       if(currentUser.rank === "Admin") {
         document.getElementById("manageOfficersTab").style.display = "block";
         document.querySelectorAll(".admin-only").forEach(function(el) {
@@ -277,7 +291,6 @@
   // Toggle Clock In/Out for the logged-in officer.
   function toggleClockStatus(index) {
     const officer = officers[index];
-    // Ensure that the logged-in officer can only toggle their own status.
     if(currentUser.username !== officer.username) {
       alert("You can only clock yourself in or out.");
       return;
@@ -296,7 +309,7 @@
       const diff = (end - start) / 1000 / 60 / 60;
       officer.activeHours = parseFloat(officer.activeHours) + diff;
     }
-  
+    saveOfficers();
     loadOfficerList();
   }
   
@@ -304,6 +317,7 @@
   function deleteOfficer(index) {
     if(confirm("Are you sure you want to delete this officer?")) {
       officers.splice(index, 1);
+      saveOfficers();
       loadOfficerList();
     }
   }
@@ -345,7 +359,7 @@
     };
   
     officers.push(newOfficer);
-  
+    saveOfficers();
     document.getElementById("createOfficerForm").reset();
   
     document.getElementById("newOfficerInfo").innerHTML = 
