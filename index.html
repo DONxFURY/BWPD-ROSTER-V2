@@ -199,18 +199,20 @@
 
 <!-- Main JavaScript -->
 <script>
-  // Function to save the officers array to localStorage.
+  // Save the officers array to localStorage.
   function saveOfficers() {
     localStorage.setItem("officers", JSON.stringify(officers));
+    console.log("Officers saved:", officers);
   }
 
-  // Function to load the officers array from localStorage.
-  // If no data is saved, it returns the default set of officers.
+  // Load the officers array from localStorage.
   function loadOfficers() {
     const savedOfficers = localStorage.getItem("officers");
     if (savedOfficers) {
+      console.log("Loaded officers from storage:", savedOfficers);
       return JSON.parse(savedOfficers);
     }
+    // If nothing is saved, return default officers.
     return [
       {badge: 'A101', name: 'John Doe', callsign: 'Unit 1', rank: 'Officer', activeHours: 0, status: 'clocked-out', clockInTime: null, clockOutTime: null, username: 'johndoe', password: 'pass123'},
       {badge: 'A102', name: 'Jane Smith', callsign: 'Unit 2', rank: 'Supervisor', activeHours: 0, status: 'clocked-out', clockInTime: null, clockOutTime: null, username: 'janesmith', password: 'pass456'},
@@ -218,18 +220,18 @@
     ];
   }
 
-  // Initialize the officers array from localStorage.
+  // Initialize the officers array.
   let officers = loadOfficers();
 
   let currentUser = null; // The logged-in officer
   
-  // Officer Login: check credentials against the officer data.
+  // Officer Login
   document.getElementById("loginForm").addEventListener("submit", function(e) {
     e.preventDefault();
     const inputUsername = document.getElementById("username").value.trim();
     const inputPassword = document.getElementById("password").value.trim();
     
-    // Verify against the pre-assigned officer credentials.
+    // Find officer in the array.
     const officer = officers.find(o => o.username === inputUsername && o.password === inputPassword);
     
     if(officer) {
@@ -237,7 +239,7 @@
       $("#loginModal").modal("hide");
       document.getElementById("loginModal").style.display = "none";
       document.getElementById("mainContent").classList.remove("hidden");
-      // If logged in officer is Admin, show the Manage Officers tab and admin-only columns.
+      // If Admin, show additional controls.
       if(currentUser.rank === "Admin") {
         document.getElementById("manageOfficersTab").style.display = "block";
         document.querySelectorAll(".admin-only").forEach(function(el) {
@@ -250,14 +252,13 @@
     }
   });
   
-  // Function to load the officer roster list.
+  // Populate the officer list table.
   function loadOfficerList() {
     const officerList = document.getElementById("officerList");
     officerList.innerHTML = '';
   
     officers.forEach((officer, index) => {
       const tr = document.createElement("tr");
-      // Only allow clock in/out for the logged in officer.
       const clockBtn = (currentUser.username === officer.username) ?
         `<button class="btn ${officer.status === 'clocked-in' ? 'clocked-in' : 'clocked-out'} status-btn action-btn" onclick="toggleClockStatus(${index})">
           ${officer.status === 'clocked-in' ? 'Clock Out' : 'Clock In'}
@@ -277,18 +278,18 @@
     });
   }
   
-  // Function to calculate active hours.
+  // Calculate active hours.
   function calculateActiveHours(officer) {
     if (officer.clockInTime && officer.clockOutTime) {
       const start = new Date(officer.clockInTime);
       const end = new Date(officer.clockOutTime);
-      const diff = (end - start) / 1000 / 60 / 60; // Convert ms to hours
+      const diff = (end - start) / 1000 / 60 / 60;
       return diff.toFixed(2) + ' hours';
     }
     return officer.activeHours + ' hours';
   }
   
-  // Toggle Clock In/Out for the logged-in officer.
+  // Toggle clock status.
   function toggleClockStatus(index) {
     const officer = officers[index];
     if(currentUser.username !== officer.username) {
@@ -313,7 +314,7 @@
     loadOfficerList();
   }
   
-  // Delete an officer (Admin Only)
+  // Delete an officer (Admin Only).
   function deleteOfficer(index) {
     if(confirm("Are you sure you want to delete this officer?")) {
       officers.splice(index, 1);
@@ -322,10 +323,7 @@
     }
   }
   
-  // ---------------------------
   // Officer Account Creation (Admin Only)
-  // ---------------------------
-  
   function generateUsername(name) {
     return name.toLowerCase().replace(/\s+/g, '');
   }
