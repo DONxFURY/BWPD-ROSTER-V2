@@ -1,28 +1,36 @@
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 8080 });
 
-const officers = [
-  { badge: 'A101', name: 'John Doe', callsign: 'Unit 1', rank: 'Officer', activeHours: 0, status: 'clocked-out' },
-  { badge: 'A102', name: 'Jane Smith', callsign: 'Unit 2', rank: 'Supervisor', activeHours: 0, status: 'clocked-out' },
-  { badge: 'A103', name: 'James Brown', callsign: 'Unit 3', rank: 'Admin', activeHours: 0, status: 'clocked-out' }
+let officers = [
+  {badge: 'A101', name: 'John Doe', callsign: 'Unit 1', rank: 'Officer', activeHours: 0, status: 'clocked-out', clockInTime: null, clockOutTime: null, username: 'johndoe', password: 'pass123'},
+  {badge: 'A102', name: 'Jane Smith', callsign: 'Unit 2', rank: 'Supervisor', activeHours: 0, status: 'clocked-out', clockInTime: null, clockOutTime: null, username: 'janesmith', password: 'pass456'},
+  {badge: 'A103', name: 'James Brown', callsign: 'Unit 3', rank: 'Admin', activeHours: 0, status: 'clocked-out', clockInTime: null, clockOutTime: null, username: 'jamesbrown', password: 'pass789'}
 ];
 
-wss.on('connection', ws => {
-  console.log('New connection established');
+wss.on('connection', (ws) => {
+  console.log('Client connected');
   
-  // Send initial roster data to the new client
-  ws.send(JSON.stringify({ type: 'initialRoster', data: officers }));
+  // Send the officer list to the new client
+  ws.send(JSON.stringify({ type: 'officers', data: officers }));
   
-  // Broadcast updated officer data to all connected clients
-  ws.on('message', message => {
-    const data = JSON.parse(message);
-    if (data.type === 'updateRoster') {
-      officers[data.index] = data.officer; // Update officer data
+  // Handle incoming messages (updates to officers data)
+  ws.on('message', (message) => {
+    const parsedMessage = JSON.parse(message);
+    
+    if (parsedMessage.type === 'update') {
+      // Update the officers array based on the message
+      officers = parsedMessage.data;
+      
+      // Broadcast the updated officers list to all connected clients
       wss.clients.forEach(client => {
-        if (client !== ws && client.readyState === WebSocket.OPEN) {
-          client.send(JSON.stringify({ type: 'updateRoster', data: officers }));
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({ type: 'officers', data: officers }));
         }
       });
     }
+  });
+  
+  ws.on('close', () => {
+    console.log('Client disconnected');
   });
 });
